@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Express WebSocket Example</title>
+</head>
+<body>
+    <h1>WebSocket Chat</h1>
+    <div>
+        <strong>Current Time:</strong> <span id="currentTime">--:--:--</span>
+    </div>
+    <input type="text" id="messageInput" placeholder="Enter message" onsubmit="sendMessage()">
+    <button onclick="sendMessage()">Send</button>
+
+    <h2>Messages:</h2>
+    <div id="messages" style="padding:10px;display: block;border: 1px solid #aaa;border-radius: 10px;"></div>
+
+    <script>
+        // wss is used for secure WebSocket connections and ws is for non-secure connections
+        // const socket = new WebSocket('wss://website.com/websocket'); 
+        const socket = new WebSocket('ws://localhost:3000/websocket');
+
+        socket.onopen = () => {
+            console.log('WebSocket connection established');
+        };
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Received data:', data);
+                if (data.type === 'time') {
+                    document.getElementById('currentTime').textContent = data.time;
+                } else {
+                    const messagesDiv = document.getElementById('messages');
+                    const messageElement = document.createElement('div');
+                    messageElement.textContent = data.message; //event.data;
+                    messagesDiv.appendChild(messageElement);
+                }
+            } catch {
+                // Fallback for plain chat messages
+                const messagesDiv = document.getElementById('messages');
+                const messageElement = document.createElement('div');
+                messageElement.textContent = event.data;
+                messagesDiv.appendChild(messageElement);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+            socket.send(`{"message": "${message}"}`);
+            messageInput.value = '';
+        }
+    </script>
+</body>
+</html>
